@@ -2,30 +2,64 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
+	"github.com/mikowitz/greyskull/models"
 	"github.com/mikowitz/greyskull/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestUserCreate(t *testing.T) {
-	// Setup temp environment
-	tempDir := t.TempDir()
-	originalConfigDir := os.Getenv("XDG_CONFIG_HOME")
-	os.Setenv("XDG_CONFIG_HOME", tempDir)
-	defer func() {
-		if originalConfigDir != "" {
-			os.Setenv("XDG_CONFIG_HOME", originalConfigDir)
+// testEnv sets up an isolated test environment for each test
+type testEnv struct {
+	tempDir              string
+	originalConfigDir    string
+	t                    *testing.T
+}
+
+func setupTestEnv(t *testing.T) *testEnv {
+	env := &testEnv{
+		tempDir:           t.TempDir(),
+		originalConfigDir: os.Getenv("XDG_CONFIG_HOME"),
+		t:                 t,
+	}
+	
+	os.Setenv("XDG_CONFIG_HOME", env.tempDir)
+	
+	t.Cleanup(func() {
+		if env.originalConfigDir != "" {
+			os.Setenv("XDG_CONFIG_HOME", env.originalConfigDir)
 		} else {
 			os.Unsetenv("XDG_CONFIG_HOME")
 		}
-	}()
+	})
+	
+	return env
+}
 
+func (env *testEnv) createUsersDirectly(usernames []string) {
+	repo, err := repository.NewJSONUserRepository()
+	require.NoError(env.t, err)
+	
+	for _, username := range usernames {
+		user := &models.User{
+			ID:             uuid.New(),
+			Username:       username,
+			CurrentProgram: uuid.Nil,
+			Programs:       make(map[uuid.UUID]*models.UserProgram),
+			WorkoutHistory: []models.Workout{},
+			CreatedAt:      time.Now(),
+		}
+		err := repo.Create(user)
+		require.NoError(env.t, err)
+	}
+}
+
+func TestUserCreate(t *testing.T) {
 	tests := []struct {
 		name           string
 		input          string
@@ -55,9 +89,8 @@ func TestUserCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Clean up any existing state
-			usersDir := filepath.Join(tempDir, "greyskull", "users")
-			os.RemoveAll(usersDir)
+			// Setup isolated environment for each subtest
+			setupTestEnv(t)
 
 			// Mock stdin
 			oldStdin := os.Stdin
@@ -89,7 +122,6 @@ func TestUserCreate(t *testing.T) {
 				// Verify user was created and set as current
 				repo, err := repository.NewJSONUserRepository()
 				require.NoError(t, err)
-				_ = repo
 
 				currentUser, err := repo.GetCurrent()
 				assert.NoError(t, err)
@@ -103,42 +135,14 @@ func TestUserCreate(t *testing.T) {
 }
 
 func TestUserCreateDuplicate(t *testing.T) {
-	// Setup temp environment
-	tempDir := t.TempDir()
-	originalConfigDir := os.Getenv("XDG_CONFIG_HOME")
-	os.Setenv("XDG_CONFIG_HOME", tempDir)
-	defer func() {
-		if originalConfigDir != "" {
-			os.Setenv("XDG_CONFIG_HOME", originalConfigDir)
-		} else {
-			os.Unsetenv("XDG_CONFIG_HOME")
-		}
-	}()
-
-	// Create first user
-	repo, err := repository.NewJSONUserRepository()
-	require.NoError(t, err)
-	_ = repo
-
-	// Mock first user creation
-	oldStdin := os.Stdin
-	r, w, _ := os.Pipe()
-	os.Stdin = r
-
-	var buf bytes.Buffer
-	createCmd.SetOut(&buf)
-	createCmd.SetErr(&buf)
-
-	go func() {
-		defer w.Close()
-		w.Write([]byte("TestUser\n"))
-	}()
-
-	err = createCmd.RunE(createCmd, []string{})
-	os.Stdin = oldStdin
-	require.NoError(t, err)
+	// Setup isolated environment
+	env := setupTestEnv(t)
+	
+	// Create first user directly
+	env.createUsersDirectly([]string{"TestUser"})
 
 	// Try to create duplicate (case-insensitive)
+	oldStdin := os.Stdin
 	r2, w2, _ := os.Pipe()
 	os.Stdin = r2
 
@@ -151,7 +155,7 @@ func TestUserCreateDuplicate(t *testing.T) {
 		w2.Write([]byte("testuser\n"))
 	}()
 
-	err = createCmd.RunE(createCmd, []string{})
+	err := createCmd.RunE(createCmd, []string{})
 	os.Stdin = oldStdin
 
 	assert.Error(t, err)
@@ -159,9 +163,9 @@ func TestUserCreateDuplicate(t *testing.T) {
 }
 
 func TestUserSwitch(t *testing.T) {
-	// Setup temp environment and users
-	tempDir := t.TempDir()
-	setupTestUsers(t, tempDir, []string{"Alice", "Bob"})
+	// Setup isolated environment
+	env := setupTestEnv(t)
+	env.createUsersDirectly([]string{"Alice", "Bob"})
 
 	tests := []struct {
 		name           string
@@ -211,9 +215,6 @@ func TestUserSwitch(t *testing.T) {
 }
 
 func TestUserList(t *testing.T) {
-	// Setup temp environment
-	tempDir := t.TempDir()
-
 	tests := []struct {
 		name           string
 		users          []string
@@ -251,20 +252,16 @@ func TestUserList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupTestUsers(t, tempDir, tt.users)
+			// Setup isolated environment for each subtest
+			env := setupTestEnv(t)
+			
+			// Create users directly if specified
+			if len(tt.users) > 0 {
+				env.createUsersDirectly(tt.users)
+			}
 
 			// Set current user if specified
 			if tt.currentUser != "" {
-				originalConfigDir := os.Getenv("XDG_CONFIG_HOME")
-				os.Setenv("XDG_CONFIG_HOME", tempDir)
-				defer func() {
-					if originalConfigDir != "" {
-						os.Setenv("XDG_CONFIG_HOME", originalConfigDir)
-					} else {
-						os.Unsetenv("XDG_CONFIG_HOME")
-					}
-				}()
-
 				repo, err := repository.NewJSONUserRepository()
 				require.NoError(t, err)
 				err = repo.SetCurrent(tt.currentUser)
@@ -377,39 +374,3 @@ func TestValidateUsername(t *testing.T) {
 	}
 }
 
-// Helper function to setup test users
-func setupTestUsers(t *testing.T, tempDir string, usernames []string) {
-	originalConfigDir := os.Getenv("XDG_CONFIG_HOME")
-	os.Setenv("XDG_CONFIG_HOME", tempDir)
-	defer func() {
-		if originalConfigDir != "" {
-			os.Setenv("XDG_CONFIG_HOME", originalConfigDir)
-		} else {
-			os.Unsetenv("XDG_CONFIG_HOME")
-		}
-	}()
-
-	repo, err := repository.NewJSONUserRepository()
-	require.NoError(t, err)
-	_ = repo
-
-	for _, username := range usernames {
-		// Mock stdin for each user creation
-		oldStdin := os.Stdin
-		r, w, _ := os.Pipe()
-		os.Stdin = r
-
-		var buf bytes.Buffer
-		createCmd.SetOut(&buf)
-		createCmd.SetErr(&buf)
-
-		go func(user string) {
-			defer w.Close()
-			w.Write([]byte(fmt.Sprintf("%s\n", user)))
-		}(username)
-
-		err := createCmd.RunE(createCmd, []string{})
-		os.Stdin = oldStdin
-		require.NoError(t, err)
-	}
-}

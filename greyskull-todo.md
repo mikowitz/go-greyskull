@@ -180,52 +180,52 @@
 ## Prompt 5: Program Start Command
 
 ### Program Commands
-- [ ] Create cmd/program.go:
-  - [ ] Parent command "program" with description "Manage workout programs"
-  - [ ] Add child commands in init()
+- [x] Create cmd/program.go:
+  - [x] Parent command "program" with description "Manage workout programs"
+  - [x] Add child commands in init()
 
-- [ ] Create cmd/program_start.go:
-  - [ ] Check for current user (error if none)
-  - [ ] List available programs with numbered list
-  - [ ] Prompt "Select a program (enter number): "
-  - [ ] Validate selection
+- [x] Create cmd/program_start.go:
+  - [x] Check for current user (error if none)
+  - [x] List available programs with numbered list
+  - [x] Prompt "Select a program (enter number): "
+  - [x] Validate selection
 
 ### Weight Input
-- [ ] For each core lift (Squat, Deadlift, Bench Press, Overhead Press):
-  - [ ] Prompt: "Enter starting weight for {lift} (lbs): "
-  - [ ] Accept any positive number (float64)
-  - [ ] Allow decimals for microplates
+- [x] For each core lift (Squat, Deadlift, Bench Press, Overhead Press):
+  - [x] Prompt: "Enter starting weight for {lift} (lbs): "
+  - [x] Accept any positive number (float64)
+  - [x] Allow decimals for microplates
 
 ### UserProgram Creation
-- [ ] Create UserProgram:
-  - [ ] Generate UUID v7 for ID
-  - [ ] Set UserID from current user
-  - [ ] Set ProgramID from selected program
-  - [ ] Store starting weights using LiftName keys
-  - [ ] Copy StartingWeights to CurrentWeights
-  - [ ] Set CurrentDay to 1
-  - [ ] Set StartedAt to current time
+- [x] Create UserProgram:
+  - [x] Generate UUID v7 for ID
+  - [x] Set UserID from current user
+  - [x] Set ProgramID from selected program
+  - [x] Store starting weights using LiftName keys
+  - [x] Copy StartingWeights to CurrentWeights
+  - [x] Set CurrentDay to 1
+  - [x] Set StartedAt to current time
 
 ### User Update
-- [ ] Update user:
-  - [ ] Add UserProgram to Programs map (keyed by UUID)
-  - [ ] Set CurrentProgram to the new UserProgram ID
-  - [ ] Save via repository
+- [x] Update user:
+  - [x] Add UserProgram to Programs map (keyed by UUID)
+  - [x] Set CurrentProgram to the new UserProgram ID
+  - [x] Save via repository
 
-- [ ] Show success message with day 1 preview
+- [x] Show success message with day 1 preview
 
 ### Helper Functions
-- [ ] promptFloat(prompt string) (float64, error) for weight input
-- [ ] validatePositive(weight float64) error
+- [x] promptFloat(prompt string) (float64, error) for weight input
+- [x] validatePositive(weight float64) error
 
 ### Integration & Testing
-- [ ] Wire to root command
-- [ ] Mock user input for program selection and weights
-- [ ] Verify UserProgram created correctly
-- [ ] Verify CurrentProgram updated
-- [ ] Verify CurrentDay set to 1
-- [ ] Test with no current user
-- [ ] Test invalid weight inputs
+- [x] Wire to root command
+- [x] Mock user input for program selection and weights
+- [x] Verify UserProgram created correctly
+- [x] Verify CurrentProgram updated
+- [x] Verify CurrentDay set to 1
+- [x] Test with no current user
+- [x] Test invalid weight inputs
 
 ## Prompt 6: Workout Calculation Engine
 

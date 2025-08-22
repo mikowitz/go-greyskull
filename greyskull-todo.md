@@ -230,45 +230,45 @@
 ## Prompt 6: Workout Calculation Engine
 
 ### Calculator Functions (workout/calculator.go)
-- [ ] Create weight rounding function:
-  - [ ] func RoundDown2_5(weight float64) float64
+- [x] Create weight rounding function:
+  - [x] func RoundDown2_5(weight float64) float64
 
-- [ ] Create warmup calculation:
-  - [ ] func CalculateWarmupSets(workingWeight float64, warmupTemplates []models.SetTemplate) []models.Set
-  - [ ] Return empty slice if working weight < 85 lbs
-  - [ ] Calculate weight (0.0 = 45 lbs bar, otherwise workingWeight * percentage)
-  - [ ] Round down to 2.5 lbs
-  - [ ] Create Set with UUID, weight, target reps, Type, Order
+- [x] Create warmup calculation:
+  - [x] func CalculateWarmupSets(workingWeight float64, warmupTemplates []models.SetTemplate) []models.Set
+  - [x] Return empty slice if working weight < 85 lbs
+  - [x] Calculate weight (0.0 = 45 lbs bar, otherwise workingWeight * percentage)
+  - [x] Round down to 2.5 lbs
+  - [x] Create Set with UUID, weight, target reps, Type, Order
 
-- [ ] Create working set calculation:
-  - [ ] func CalculateWorkingSets(workingWeight float64, workingTemplates []models.SetTemplate) []models.Set
-  - [ ] Use working weight directly (can be < 45 lbs)
-  - [ ] Round down to 2.5 lbs
-  - [ ] Create Set with proper Type (WorkingSet or AMRAPSet)
-  - [ ] Set Order field
+- [x] Create working set calculation:
+  - [x] func CalculateWorkingSets(workingWeight float64, workingTemplates []models.SetTemplate) []models.Set
+  - [x] Use working weight directly (can be < 45 lbs)
+  - [x] Round down to 2.5 lbs
+  - [x] Create Set with proper Type (WorkingSet or AMRAPSet)
+  - [x] Set Order field
 
-- [ ] Create main calculation function:
-  - [ ] func CalculateNextWorkout(user *models.User, program *models.Program) (*models.Workout, error)
-  - [ ] Get current UserProgram from user.CurrentProgram
-  - [ ] Get current day from UserProgram.CurrentDay
-  - [ ] Get WorkoutTemplate for that day (handle cycle wrapping)
-  - [ ] For each LiftTemplate: calculate warmup and working sets
-  - [ ] Create Lift with all sets
-  - [ ] Return Workout (don't save it yet, just calculate)
+- [x] Create main calculation function:
+  - [x] func CalculateNextWorkout(user *models.User, program *models.Program) (*models.Workout, error)
+  - [x] Get current UserProgram from user.CurrentProgram
+  - [x] Get current day from UserProgram.CurrentDay
+  - [x] Get WorkoutTemplate for that day (handle cycle wrapping)
+  - [x] For each LiftTemplate: calculate warmup and working sets
+  - [x] Create Lift with all sets
+  - [x] Return Workout (don't save it yet, just calculate)
 
-- [ ] Create day cycle helper:
-  - [ ] func GetWorkoutDay(currentDay int, totalDays int) int
-  - [ ] Handle 1-based indexing and cycling
-  - [ ] Day 7 should wrap to day 1 for 6-day program
+- [x] Create day cycle helper:
+  - [x] func GetWorkoutDay(currentDay int, totalDays int) int
+  - [x] Handle 1-based indexing and cycling
+  - [x] Day 7 should wrap to day 1 for 6-day program
 
 ### Testing
-- [ ] Test weight rounding (42.7 -> 42.5, 45.0 -> 45.0, etc.)
-- [ ] Test warmup skipping for weights < 85 lbs
-- [ ] Test warmup calculation for various weights
-- [ ] Test working set generation
-- [ ] Test day cycling (day 7 -> day 1)
-- [ ] Test full workout calculation
-- [ ] Verify all Sets have proper Order values
+- [x] Test weight rounding (42.7 -> 42.5, 45.0 -> 45.0, etc.)
+- [x] Test warmup skipping for weights < 85 lbs
+- [x] Test warmup calculation for various weights
+- [x] Test working set generation
+- [x] Test day cycling (day 7 -> day 1)
+- [x] Test full workout calculation
+- [x] Verify all Sets have proper Order values
 
 ## Prompt 7: Next Workout Command
 

@@ -273,20 +273,20 @@
 ## Prompt 7: Next Workout Command
 
 ### Workout Commands
-- [ ] Create cmd/workout.go:
-  - [ ] Parent command "workout" with description "Track and view workouts"
-  - [ ] Add child commands in init()
+- [x] Create cmd/workout.go:
+  - [x] Parent command "workout" with description "Track and view workouts"
+  - [x] Add child commands in init()
 
-- [ ] Create cmd/workout_next.go:
-  - [ ] Load current user (error if no current user)
-  - [ ] Error if user has no CurrentProgram
-  - [ ] Load UserProgram from user.Programs[user.CurrentProgram]
-  - [ ] Load Program using program.GetByID(userProgram.ProgramID)
-  - [ ] Calculate next workout using workout.CalculateNextWorkout(user, program)
-  - [ ] Handle any errors
+- [x] Create cmd/workout_next.go:
+  - [x] Load current user (error if no current user)
+  - [x] Error if user has no CurrentProgram
+  - [x] Load UserProgram from user.Programs[user.CurrentProgram]
+  - [x] Load Program using program.GetByID(userProgram.ProgramID)
+  - [x] Calculate next workout using workout.CalculateNextWorkout(user, program)
+  - [x] Handle any errors
 
 ### Display Formatting
-- [ ] Display workout with clear formatting:
+- [x] Display workout with clear formatting:
   ```
   Day {N} Workout:
   ================
@@ -304,18 +304,18 @@
   ```
 
 ### Format Helpers
-- [ ] formatWeight(weight float64) string - no decimals for whole numbers
-- [ ] formatSet(set models.Set, index int) string
-- [ ] Mark AMRAP sets clearly
+- [x] formatWeight(weight float64) string - no decimals for whole numbers
+- [x] formatLiftName(lift models.LiftName) string - display names for lifts
+- [x] Mark AMRAP sets clearly
 
 ### Integration & Testing
-- [ ] Wire to root command
-- [ ] Test with valid program and weights
-- [ ] Test display for different days
-- [ ] Test with no current user
-- [ ] Test with no active program
-- [ ] Test warmup display vs no warmup (< 85 lbs)
-- [ ] Verify AMRAP sets marked correctly
+- [x] Wire to root command
+- [x] Test with valid program and weights
+- [x] Test display for different days
+- [x] Test with no current user
+- [x] Test with no active program
+- [x] Test warmup display vs no warmup (< 85 lbs)
+- [x] Verify AMRAP sets marked correctly
 
 ## Prompt 8: Basic Workout Logging
 

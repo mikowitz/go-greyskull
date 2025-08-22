@@ -81,44 +81,44 @@
 ## Prompt 3: Program Templates & Hardcoded Greyskull LP
 
 ### Program Definition (program/greyskull_lp.go)
-- [ ] Create complete OG Greyskull LP program variable:
-  - [ ] ID: "550e8400-e29b-41d4-a716-446655440000" (Fixed UUID)
-  - [ ] Name: "OG Greyskull LP"
-  - [ ] Version: "1.0.0"
+- [x] Create complete OG Greyskull LP program variable:
+  - [x] ID: "550e8400-e29b-41d4-a716-446655440000" (Fixed UUID)
+  - [x] Name: "OG Greyskull LP"
+  - [x] Version: "1.0.0"
 
-- [ ] Define 6-day workout cycle:
-  - [ ] Day 1: OverheadPress, Squat
-  - [ ] Day 2: BenchPress, Deadlift
-  - [ ] Day 3: OverheadPress, Squat
-  - [ ] Day 4: BenchPress, Squat
-  - [ ] Day 5: OverheadPress, Deadlift
-  - [ ] Day 6: BenchPress, Squat
+- [x] Define 6-day workout cycle:
+  - [x] Day 1: OverheadPress, Squat
+  - [x] Day 2: BenchPress, Deadlift
+  - [x] Day 3: OverheadPress, Squat
+  - [x] Day 4: BenchPress, Squat
+  - [x] Day 5: OverheadPress, Deadlift
+  - [x] Day 6: BenchPress, Squat
 
-- [ ] Define warmup protocol for all lifts:
-  - [ ] 5 reps @ 0.0 (empty bar, 45 lbs)
-  - [ ] 4 reps @ 0.55 (55% of working weight)
-  - [ ] 3 reps @ 0.70 (70% of working weight)
-  - [ ] 2 reps @ 0.85 (85% of working weight)
+- [x] Define warmup protocol for all lifts:
+  - [x] 5 reps @ 0.0 (empty bar, 45 lbs)
+  - [x] 4 reps @ 0.55 (55% of working weight)
+  - [x] 3 reps @ 0.70 (70% of working weight)
+  - [x] 2 reps @ 0.85 (85% of working weight)
 
-- [ ] Define working sets for all lifts:
-  - [ ] Set 1: 5 reps @ 1.0 (100%), Type: WorkingSet
-  - [ ] Set 2: 5 reps @ 1.0 (100%), Type: WorkingSet
-  - [ ] Set 3: 5 reps @ 1.0 (100%), Type: AMRAPSet
+- [x] Define working sets for all lifts:
+  - [x] Set 1: 5 reps @ 1.0 (100%), Type: WorkingSet
+  - [x] Set 2: 5 reps @ 1.0 (100%), Type: WorkingSet
+  - [x] Set 3: 5 reps @ 1.0 (100%), Type: AMRAPSet
 
-- [ ] Define progression rules:
-  - [ ] IncreaseRules: OverheadPress/BenchPress = 2.5, Squat/Deadlift = 5.0
-  - [ ] DeloadPercentage: 0.9
-  - [ ] DoubleThreshold: 10
+- [x] Define progression rules:
+  - [x] IncreaseRules: OverheadPress/BenchPress = 2.5, Squat/Deadlift = 5.0
+  - [x] DeloadPercentage: 0.9
+  - [x] DoubleThreshold: 10
 
 ### Program Functions
-- [ ] GetByID(id string) (*models.Program, error) - returns GreyskullLP if ID matches
-- [ ] List() []*models.Program - returns slice containing GreyskullLP
+- [x] GetByID(id string) (*models.Program, error) - returns GreyskullLP if ID matches
+- [x] List() []*models.Program - returns slice containing GreyskullLP
 
 ### Testing
-- [ ] Verify program structure matches specification
-- [ ] Test all 6 days have correct exercises
-- [ ] Verify warmup and working sets are properly configured
-- [ ] Verify progression rules are correct
+- [x] Verify program structure matches specification
+- [x] Test all 6 days have correct exercises
+- [x] Verify warmup and working sets are properly configured
+- [x] Verify progression rules are correct
 
 ## Prompt 4: CLI Foundation & User Commands
 

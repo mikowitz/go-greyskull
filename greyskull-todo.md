@@ -43,40 +43,40 @@
 ## Prompt 2: Repository Interface & JSON Implementation
 
 ### Repository Interface (repository/interface.go)
-- [ ] Create UserRepository interface with methods:
-  - [ ] Create(user *models.User) error
-  - [ ] Get(username string) (*models.User, error)
-  - [ ] Update(user *models.User) error
-  - [ ] List() ([]string, error)
-  - [ ] GetCurrent() (string, error)
-  - [ ] SetCurrent(username string) error
+- [x] Create UserRepository interface with methods:
+  - [x] Create(user *models.User) error
+  - [x] Get(username string) (*models.User, error)
+  - [x] Update(user *models.User) error
+  - [x] List() ([]string, error)
+  - [x] GetCurrent() (string, error)
+  - [x] SetCurrent(username string) error
 
-- [ ] Create sentinel errors:
-  - [ ] var ErrUserNotFound = errors.New("user not found")
-  - [ ] var ErrUserAlreadyExists = errors.New("user already exists")
-  - [ ] var ErrNoCurrentUser = errors.New("no current user set")
+- [x] Create sentinel errors:
+  - [x] var ErrUserNotFound = errors.New("user not found")
+  - [x] var ErrUserAlreadyExists = errors.New("user already exists")
+  - [x] var ErrNoCurrentUser = errors.New("no current user set")
 
 ### JSON Repository Implementation (repository/json.go)
-- [ ] Create JSONUserRepository that:
-  - [ ] Stores user files in os.UserConfigDir()/greyskull/users/{lowercase_username}.json
-  - [ ] Stores current user in os.UserConfigDir()/greyskull/current_user.txt
-  - [ ] Preserves original username casing in User struct while using lowercase for filenames
-  - [ ] Uses sync.Mutex for thread safety
-  - [ ] Creates directories with 0755 permissions and files with 0644
-  - [ ] Implements case-insensitive username lookups
+- [x] Create JSONUserRepository that:
+  - [x] Stores user files in os.UserConfigDir()/greyskull/users/{lowercase_username}.json
+  - [x] Stores current user in os.UserConfigDir()/greyskull/current_user.txt
+  - [x] Preserves original username casing in User struct while using lowercase for filenames
+  - [x] Uses sync.Mutex for thread safety
+  - [x] Creates directories with 0755 permissions and files with 0644
+  - [x] Implements case-insensitive username lookups
 
-- [ ] Create constructor:
-  - [ ] func NewJSONUserRepository() (UserRepository, error)
-  - [ ] Get config directory using os.UserConfigDir()
-  - [ ] Create greyskull/users/ directory structure
-  - [ ] Return error if directory creation fails
+- [x] Create constructor:
+  - [x] func NewJSONUserRepository() (UserRepository, error)
+  - [x] Get config directory using os.UserConfigDir()
+  - [x] Create greyskull/users/ directory structure
+  - [x] Return error if directory creation fails
 
 ### Testing
-- [ ] Test all CRUD operations
-- [ ] Verify case-insensitive username handling
-- [ ] Test concurrent access with goroutines
-- [ ] Use t.TempDir() for test isolation
-- [ ] Verify error conditions return correct sentinel errors
+- [x] Test all CRUD operations
+- [x] Verify case-insensitive username handling
+- [x] Test concurrent access with goroutines
+- [x] Use t.TempDir() for test isolation
+- [x] Verify error conditions return correct sentinel errors
 
 ## Prompt 3: Program Templates & Hardcoded Greyskull LP
 

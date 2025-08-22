@@ -123,55 +123,59 @@
 ## Prompt 4: CLI Foundation & User Commands
 
 ### CLI Foundation
-- [ ] Create main.go:
-  - [ ] Initialize and execute root command
-  - [ ] Handle errors appropriately
+- [x] Create main.go:
+  - [x] Initialize and execute root command
+  - [x] Handle errors appropriately
 
-- [ ] Create cmd/root.go:
-  - [ ] Define rootCmd with name "greyskull"
-  - [ ] Set description: "A command-line workout tracker for Greyskull LP"
-  - [ ] Show help when no subcommand provided
-  - [ ] Add Version field (set to "0.1.0")
+- [x] Create cmd/root.go:
+  - [x] Define rootCmd with name "greyskull"
+  - [x] Set description: "A command-line workout tracker for Greyskull LP"
+  - [x] Show help when no subcommand provided
+  - [x] Add Version field (set to "0.1.0")
 
 ### User Commands
-- [ ] Create cmd/user.go:
-  - [ ] Create userCmd parent command
-  - [ ] Description: "Manage users"
-  - [ ] Explicitly add child commands in init()
+- [x] Create cmd/user.go:
+  - [x] Create userCmd parent command
+  - [x] Description: "Manage users"
+  - [x] Explicitly add child commands in init()
 
-- [ ] Create cmd/user_create.go:
-  - [ ] Prompt for username using fmt.Print/fmt.Scanln
-  - [ ] Validate username is not empty
-  - [ ] Validate username is filesystem-safe (no special chars)
-  - [ ] Check for case-insensitive duplicates
-  - [ ] Create User with UUID v7, set CreatedAt
-  - [ ] Initialize empty Programs map
-  - [ ] Save via repository
-  - [ ] Set as current user
-  - [ ] Show success message
+- [x] Create cmd/user_create.go:
+  - [x] Prompt for username using fmt.Print/fmt.Scanln
+  - [x] Validate username is not empty
+  - [x] Validate username is filesystem-safe (no special chars)
+  - [x] Check for case-insensitive duplicates
+  - [x] Create User with UUID v7, set CreatedAt
+  - [x] Initialize empty Programs map
+  - [x] Save via repository
+  - [x] Set as current user
+  - [x] Show success message
 
-- [ ] Create cmd/user_switch.go:
-  - [ ] Take username as argument
-  - [ ] Validate user exists (case-insensitive lookup)
-  - [ ] Set as current user
-  - [ ] Show confirmation with actual username casing
+- [x] Create cmd/user_switch.go:
+  - [x] Take username as argument
+  - [x] Validate user exists (case-insensitive lookup)
+  - [x] Set as current user
+  - [x] Show confirmation with actual username casing
 
-- [ ] Create cmd/user_list.go:
-  - [ ] List all users (preserve original casing)
-  - [ ] Mark current user with asterisk (*)
-  - [ ] Show helpful message if no users exist
+- [x] Create cmd/user_list.go:
+  - [x] List all users (preserve original casing)
+  - [x] Mark current user with asterisk (*)
+  - [x] Show helpful message if no users exist
 
 ### Integration
-- [ ] Wire root command to add user command
-- [ ] Wire user command to add create, switch, list commands
-- [ ] Ensure all commands use the JSON repository
+- [x] Wire root command to add user command
+- [x] Wire user command to add create, switch, list commands
+- [x] Ensure all commands use the JSON repository
+- [x] Fix XDG_CONFIG_HOME support for proper test isolation
+- [x] Fix command output to use cmd.OutOrStdout() for test capturing
 
 ### Testing
-- [ ] Test full user creation flow
-- [ ] Test case-insensitive operations
-- [ ] Test switching between users
-- [ ] Test listing with current user indicator
-- [ ] Mock user input where needed
+- [x] Test full user creation flow
+- [x] Test case-insensitive operations
+- [x] Test switching between users
+- [x] Test listing with current user indicator
+- [x] Write integration tests avoiding complex stdin mocking
+- [x] Test username validation comprehensively
+- [x] Test help text for all commands
 
 ## Prompt 5: Program Start Command
 

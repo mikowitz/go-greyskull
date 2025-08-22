@@ -21,9 +21,16 @@ type JSONUserRepository struct {
 
 // NewJSONUserRepository creates a new JSONUserRepository instance
 func NewJSONUserRepository() (UserRepository, error) {
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user config directory: %w", err)
+	// Check for XDG_CONFIG_HOME first (for Linux/testing), fallback to OS default
+	var configDir string
+	if xdgConfig := os.Getenv("XDG_CONFIG_HOME"); xdgConfig != "" {
+		configDir = xdgConfig
+	} else {
+		var err error
+		configDir, err = os.UserConfigDir()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user config directory: %w", err)
+		}
 	}
 
 	greyskullDir := filepath.Join(configDir, "greyskull")

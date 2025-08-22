@@ -5,7 +5,7 @@
 We're building a Greyskull LP workout tracking CLI in Go. The application tracks multiple users, their workout programs, and progression over time. Key architectural decisions:
 
 - **Domain Models**: All entities have UUID v7 identifiers for future database migration
-- **Storage**: JSON files with case-insensitive username handling  
+- **Storage**: JSON files with case-insensitive username handling
 - **Type Safety**: Custom types for LiftName and SetType
 - **Programs**: Hardcoded templates with potential for user-created programs later
 - **Business Logic**: Modular functions in domain-focused packages
@@ -17,7 +17,7 @@ I'm building a Greyskull LP workout tracker CLI in Go. Let's start with the foun
 
 Create the initial project structure:
 1. Initialize a Go module "github.com/user/greyskull"
-2. Add dependencies: 
+2. Add dependencies:
    - github.com/spf13/cobra for CLI
    - github.com/google/uuid for UUID generation (use v7 UUIDs)
    - github.com/stretchr/testify for testing
@@ -61,7 +61,7 @@ Now let's create the data persistence layer with proper error handling and threa
 Create repository/interface.go with:
 - UserRepository interface with methods:
   - Create(user *models.User) error
-  - Get(username string) (*models.User, error)  
+  - Get(username string) (*models.User, error)
   - Update(user *models.User) error
   - List() ([]string, error)
   - GetCurrent() (string, error)
@@ -112,9 +112,10 @@ var GreyskullLP = &models.Program{
 ```
 
 The program should have:
+
 - 6-day workout cycle:
   - Day 1: OverheadPress, Squat
-  - Day 2: BenchPress, Deadlift  
+  - Day 2: BenchPress, Deadlift
   - Day 3: OverheadPress, Squat
   - Day 4: BenchPress, Squat
   - Day 5: OverheadPress, Deadlift
@@ -137,39 +138,47 @@ The program should have:
   - DoubleThreshold: 10
 
 2. Program retrieval functions:
+
 - GetByID(id string) (*models.Program, error) - returns GreyskullLP if ID matches
 - List() []*models.Program - returns slice containing GreyskullLP
 
 Write tests to verify:
+
 - Program structure matches specification
 - All 6 days have correct exercises
 - Warmup and working sets are properly configured
 - Progression rules are correct
+
 ```
 
 ## Prompt 4: CLI Foundation & User Commands
 
 ```
+
 Let's build the CLI structure with Cobra and implement user management commands.
 
 Create the CLI foundation:
 
 1. main.go:
+
 - Initialize and execute root command
 - Handle errors appropriately
 
 2. cmd/root.go:
+
 - Define rootCmd with name "greyskull"
 - Set description: "A command-line workout tracker for Greyskull LP"
 - Show help when no subcommand provided
 - Add Version field (set to "0.1.0" for now)
 
 3. cmd/user.go:
+
 - Create userCmd parent command
 - Description: "Manage users"
 - Explicitly add child commands in init()
 
 4. cmd/user_create.go:
+
 - Prompt for username using fmt.Print/fmt.Scanln
 - Validate username is not empty
 - Validate username is filesystem-safe (no special chars like /, \, :, *, ?, ", <, >, |)
@@ -181,39 +190,47 @@ Create the CLI foundation:
 - Show success message
 
 5. cmd/user_switch.go:
+
 - Take username as argument
 - Validate user exists (case-insensitive lookup)
 - Set as current user
 - Show confirmation with actual username casing
 
 6. cmd/user_list.go:
+
 - List all users (preserve original casing)
 - Mark current user with asterisk (*)
 - Show helpful message if no users exist
 
 Wire everything together:
+
 - Root command adds user command
 - User command adds create, switch, list commands
 - All commands use the JSON repository
 
 Write integration tests:
+
 - Test full user creation flow
 - Test case-insensitive operations
 - Test switching between users
 - Test listing with current user indicator
 - Mock user input where needed
+
 ```
 
 ## Prompt 5: Program Start Command
 
 ```
+
 Implement the program start command to initialize a workout program for the current user.
 
 Create cmd/program.go:
+
 - Parent command "program" with description "Manage workout programs"
 - Add child commands in init()
 
 Create cmd/program_start.go:
+
 1. Check for current user (error if none)
 2. List available programs:
    - Show numbered list (e.g., "1. OG Greyskull LP")
@@ -243,28 +260,33 @@ Create cmd/program_start.go:
    - "Program started! Day 1 will be: {exercises}"
 
 Helper functions:
+
 - promptFloat(prompt string) (float64, error) for weight input
 - validatePositive(weight float64) error
 
 Wire to root command.
 
 Write integration tests:
+
 - Mock user input for program selection and weights
 - Verify UserProgram created correctly
 - Verify CurrentProgram updated
 - Verify CurrentDay set to 1
 - Test with no current user
 - Test invalid weight inputs
+
 ```
 
 ## Prompt 6: Workout Calculation Engine
 
 ```
+
 Create the workout calculation engine that generates workouts from templates.
 
 Create workout/calculator.go with:
 
 1. Weight rounding function:
+
 ```go
 func RoundDown2_5(weight float64) float64 {
     return math.Floor(weight/2.5) * 2.5
@@ -272,6 +294,7 @@ func RoundDown2_5(weight float64) float64 {
 ```
 
 2. Warmup calculation:
+
 ```go
 func CalculateWarmupSets(workingWeight float64, warmupTemplates []models.SetTemplate) []models.Set {
     // Return empty slice if working weight < 85 lbs
@@ -283,6 +306,7 @@ func CalculateWarmupSets(workingWeight float64, warmupTemplates []models.SetTemp
 ```
 
 3. Working set calculation:
+
 ```go
 func CalculateWorkingSets(workingWeight float64, workingTemplates []models.SetTemplate) []models.Set {
     // For each template:
@@ -294,6 +318,7 @@ func CalculateWorkingSets(workingWeight float64, workingTemplates []models.SetTe
 ```
 
 4. Main calculation function:
+
 ```go
 func CalculateNextWorkout(user *models.User, program *models.Program) (*models.Workout, error) {
     // Get current UserProgram from user.CurrentProgram
@@ -309,6 +334,7 @@ func CalculateNextWorkout(user *models.User, program *models.Program) (*models.W
 ```
 
 5. Day cycle helper:
+
 ```go
 func GetWorkoutDay(currentDay int, totalDays int) int {
     // Handle 1-based indexing and cycling
@@ -317,6 +343,7 @@ func GetWorkoutDay(currentDay int, totalDays int) int {
 ```
 
 Write comprehensive tests:
+
 - Test weight rounding (42.7 -> 42.5, 45.0 -> 45.0, etc.)
 - Test warmup skipping for weights < 85 lbs
 - Test warmup calculation for various weights
@@ -324,14 +351,17 @@ Write comprehensive tests:
 - Test day cycling (day 7 -> day 1)
 - Test full workout calculation
 - Verify all Sets have proper Order values
+
 ```
 
 ## Prompt 7: Next Workout Command
 
 ```
+
 Implement the "workout next" command to display the upcoming workout.
 
 Create cmd/workout.go:
+
 - Parent command "workout" with description "Track and view workouts"
 - Add child commands in init()
 
@@ -350,6 +380,7 @@ Create cmd/workout_next.go:
    - Handle any errors
 
 4. Display workout with clear formatting:
+
 ```
 Day {N} Workout:
 ================
@@ -380,17 +411,20 @@ Squat:
 Wire to root command.
 
 Write integration tests:
+
 - Test with valid program and weights
 - Test display for different days
 - Test with no current user
 - Test with no active program
 - Test warmup display vs no warmup (< 85 lbs)
 - Verify AMRAP sets marked correctly
+
 ```
 
 ## Prompt 8: Basic Workout Logging
 
 ```
+
 Implement the basic "workout log" command that records completed workouts.
 
 Create cmd/workout_log.go:
@@ -401,7 +435,7 @@ Create cmd/workout_log.go:
 
 2. Load prerequisites:
    - Current user (error if none)
-   - UserProgram (error if no active program)  
+   - UserProgram (error if no active program)
    - Program definition
 
 3. Calculate and display workout:
@@ -432,20 +466,24 @@ Create cmd/workout_log.go:
    "Next workout: Day {N}"
 
 Helper functions:
+
 - promptInt(prompt string) (int, error)
-- buildCompletedWorkout(template *models.Workout, amrapReps map[models.LiftName]int) *models.Workout
+- buildCompletedWorkout(template *models.Workout, amrapReps map[models.LiftName]int)*models.Workout
 
 Write tests:
+
 - Test successful logging flow
 - Test AMRAP input validation
 - Verify workout saved to history
 - Verify CurrentDay increments
 - Test with no current user/program
+
 ```
 
 ## Prompt 9: Advanced Workout Logging with Failure Mode
 
 ```
+
 Add failure mode support to handle missed reps.
 
 Update cmd/workout_log.go:
@@ -460,17 +498,19 @@ Update cmd/workout_log.go:
 
 3. Failure mode prompting:
    For each lift and set:
+
    ```
    Overhead Press - Set 1 (Warmup):
    Target: 5 reps @ 45 lbs
-   How many reps completed? 
+   How many reps completed?
    ```
+
    - Accept 0 for failed sets
    - Validate non-negative integer
    - Show set type (Warmup/Working/AMRAP)
 
 4. Update helper functions:
-   - collectWithFailure(workout *models.Workout) *models.Workout
+   - collectWithFailure(workout *models.Workout)*models.Workout
    - Shows each set individually
    - Collects actual reps for all sets
 
@@ -479,28 +519,33 @@ Update cmd/workout_log.go:
    - Same CurrentDay increment
 
 6. Update help text:
+
    ```
    Log a completed workout. By default, assumes all non-AMRAP sets were completed successfully.
    Use --fail flag to record individual reps for each set.
    ```
 
 Write tests:
+
 - Test default mode still works
 - Test --fail flag changes behavior
 - Test collecting reps for every set in fail mode
 - Test 0 reps accepted for failures
 - Verify both modes save correctly
 - Test mixed success/failure sets
+
 ```
 
 ## Prompt 10: Progression System & Final Integration
 
 ```
+
 Implement the weight progression system and integrate it with workout logging.
 
 Create workout/progression.go:
 
 1. AMRAP detection:
+
 ```go
 func GetAMRAPReps(lift *models.Lift) (int, error) {
     // Find the AMRAP set (Type == models.AMRAPSet)
@@ -510,6 +555,7 @@ func GetAMRAPReps(lift *models.Lift) (int, error) {
 ```
 
 2. Weight calculation:
+
 ```go
 func CalculateNewWeight(currentWeight float64, amrapReps int, baseIncrement float64, rules *models.ProgressionRules) float64 {
     // If amrapReps < 5: return currentWeight * rules.DeloadPercentage
@@ -520,6 +566,7 @@ func CalculateNewWeight(currentWeight float64, amrapReps int, baseIncrement floa
 ```
 
 3. Full progression calculation:
+
 ```go
 func CalculateProgression(workout *models.Workout, currentWeights map[models.LiftName]float64, rules *models.ProgressionRules) (map[models.LiftName]float64, error) {
     // For each lift in workout:
@@ -536,6 +583,7 @@ Update cmd/workout_log.go:
    - Call progression.CalculateProgression()
    - Update UserProgram.CurrentWeights with new weights
    - Show weight changes to user:
+
      ```
      Weight Updates:
      Overhead Press: 95 → 97.5 lbs (+2.5)
@@ -548,10 +596,12 @@ Update cmd/workout_log.go:
    - Use colors if available (green for increase, red for deload)
 
 Integration updates:
+
 - Ensure CurrentWeights is used for next workout calculation
 - Verify CurrentDay increments after progression
 
 Write comprehensive tests:
+
 - Test normal progression (AMRAP = 5-9)
 - Test double progression (AMRAP >= 10)
 - Test deload (AMRAP < 5)
@@ -560,11 +610,13 @@ Write comprehensive tests:
 - Test progression display formatting
 
 Final integration test:
+
 - Create user
 - Start program with weights
 - Log several workouts with different AMRAP counts
 - Verify progression applied correctly
 - Verify next workout uses updated weights
+
 ```
 
 ## Testing Strategy Notes
@@ -588,6 +640,7 @@ Each prompt should emphasize:
 - User-friendly output at every step## Prompt 8: Basic Workout Logging
 
 ```
+
 Implement the basic "workout log" command that records completed workouts.
 
 Create cmd/workout_log.go:
@@ -598,7 +651,7 @@ Create cmd/workout_log.go:
 
 2. Load prerequisites:
    - Current user (error if none)
-   - UserProgram (error if no active program)  
+   - UserProgram (error if no active program)
    - Program definition
 
 3. Calculate and display workout:
@@ -629,25 +682,30 @@ Create cmd/workout_log.go:
    "Next workout: Day {N}"
 
 Helper functions:
+
 - promptInt(prompt string) (int, error)
-- buildCompletedWorkout(template *models.Workout, amrapReps map[models.LiftName]int) *models.Workout
+- buildCompletedWorkout(template *models.Workout, amrapReps map[models.LiftName]int)*models.Workout
 
 Write tests:
+
 - Test successful logging flow
 - Test AMRAP input validation
 - Verify workout saved to history
 - Verify CurrentDay increments
 - Test with no current user/program
+
 ```# Greyskull LP CLI Implementation Prompts
 
 ## Prompt 1: Project Foundation & Domain Models
 
 ```
+
 I'm building a Greyskull LP workout tracker CLI in Go. Let's start with the foundation and domain models.
 
 Create the initial project structure:
+
 1. Initialize a Go module "github.com/user/greyskull"
-2. Add dependencies: 
+2. Add dependencies:
    - github.com/spf13/cobra for CLI
    - github.com/google/uuid for UUID generation (use v7 UUIDs)
    - github.com/stretchr/testify for testing
@@ -655,14 +713,17 @@ Create the initial project structure:
 Create domain models in models/models.go with:
 
 Type definitions:
+
 - type LiftName string
 - type SetType string
 
 Constants:
+
 - Squat, Deadlift, BenchPress, OverheadPress (LiftName)
 - WarmupSet, WorkingSet, AMRAPSet (SetType)
 
 User domain structs (all with ID field as UUID string):
+
 - User: ID, Username, CurrentProgram (UUID ref), Programs (map[string]*UserProgram), WorkoutHistory ([]Workout), CreatedAt
 - UserProgram: ID, UserID, ProgramID, StartingWeights (map[LiftName]float64), CurrentWeights (map[LiftName]float64), CurrentDay (int), StartedAt
 - Workout: ID, UserProgramID, Day, Exercises ([]Lift), EnteredAt
@@ -670,6 +731,7 @@ User domain structs (all with ID field as UUID string):
 - Set: ID, Weight, TargetReps, ActualReps (int), Type (SetType), Order (int)
 
 Program template structs:
+
 - Program: ID, Name, Version (string), Workouts ([]WorkoutTemplate), ProgressionRules
 - WorkoutTemplate: Day (int), Lifts ([]LiftTemplate)
 - LiftTemplate: LiftName, WarmupSets ([]SetTemplate), WorkingSets ([]SetTemplate)
@@ -677,21 +739,25 @@ Program template structs:
 - ProgressionRules: IncreaseRules (map[LiftName]float64), DeloadPercentage (float64), DoubleThreshold (int)
 
 Add validation methods:
+
 - User.Validate() - ensure Username is not empty
 - Set.IsComplete() - check if ActualReps > 0
 
 Write comprehensive tests using testify/assert for all validation methods and struct initialization. Ensure UUID generation works correctly.
+
 ```
 
 ## Prompt 2: Repository Interface & JSON Implementation
 
 ```
+
 Now let's create the data persistence layer with proper error handling and thread safety.
 
 Create repository/interface.go with:
+
 - UserRepository interface with methods:
   - Create(user *models.User) error
-  - Get(username string) (*models.User, error)  
+  - Get(username string) (*models.User, error)
   - Update(user *models.User) error
   - List() ([]string, error)
   - GetCurrent() (string, error)
@@ -703,6 +769,7 @@ Create repository/interface.go with:
   - var ErrNoCurrentUser = errors.New("no current user set")
 
 Create repository/json.go with JSONUserRepository that:
+
 - Stores user files in os.UserConfigDir()/greyskull/users/{lowercase_username}.json
 - Stores current user in os.UserConfigDir()/greyskull/current_user.txt
 - Preserves original username casing in User struct while using lowercase for filenames
@@ -711,27 +778,32 @@ Create repository/json.go with JSONUserRepository that:
 - Implements case-insensitive username lookups (e.g., "Michael" and "michael" are same user)
 
 Constructor should:
+
 - func NewJSONUserRepository() (UserRepository, error)
 - Get config directory using os.UserConfigDir()
 - Create greyskull/users/ directory structure
 - Return error if directory creation fails
 
 Write comprehensive tests using testify/assert and testify/require:
+
 - Test all CRUD operations
 - Verify case-insensitive username handling
 - Test concurrent access with goroutines
 - Use t.TempDir() for test isolation
 - Verify error conditions return correct sentinel errors
+
 ```
 
 ## Prompt 3: Program Templates & Hardcoded Greyskull LP
 
 ```
+
 Let's define the program system with our hardcoded Greyskull LP template.
 
 Create program/greyskull_lp.go with:
 
 1. The complete OG Greyskull LP program as a variable:
+
 ```go
 var GreyskullLP = &models.Program{
     ID:      "550e8400-e29b-41d4-a716-446655440000", // Fixed UUID for consistency
@@ -742,9 +814,10 @@ var GreyskullLP = &models.Program{
 ```
 
 The program should have:
+
 - 6-day workout cycle:
   - Day 1: OverheadPress, Squat
-  - Day 2: BenchPress, Deadlift  
+  - Day 2: BenchPress, Deadlift
   - Day 3: OverheadPress, Squat
   - Day 4: BenchPress, Squat
   - Day 5: OverheadPress, Deadlift
@@ -767,39 +840,47 @@ The program should have:
   - DoubleThreshold: 10
 
 2. Program retrieval functions:
+
 - GetByID(id string) (*models.Program, error) - returns GreyskullLP if ID matches
 - List() []*models.Program - returns slice containing GreyskullLP
 
 Write tests to verify:
+
 - Program structure matches specification
 - All 6 days have correct exercises
 - Warmup and working sets are properly configured
 - Progression rules are correct
+
 ```
 
 ## Prompt 4: CLI Foundation & User Commands
 
 ```
+
 Let's build the CLI structure with Cobra and implement user management commands.
 
 Create the CLI foundation:
 
 1. main.go:
+
 - Initialize and execute root command
 - Handle errors appropriately
 
 2. cmd/root.go:
+
 - Define rootCmd with name "greyskull"
 - Set description: "A command-line workout tracker for Greyskull LP"
 - Show help when no subcommand provided
 - Add Version field (set to "0.1.0" for now)
 
 3. cmd/user.go:
+
 - Create userCmd parent command
 - Description: "Manage users"
 - Explicitly add child commands in init()
 
 4. cmd/user_create.go:
+
 - Prompt for username using fmt.Print/fmt.Scanln
 - Validate username is not empty
 - Validate username is filesystem-safe (no special chars like /, \, :, *, ?, ", <, >, |)
@@ -811,39 +892,47 @@ Create the CLI foundation:
 - Show success message
 
 5. cmd/user_switch.go:
+
 - Take username as argument
 - Validate user exists (case-insensitive lookup)
 - Set as current user
 - Show confirmation with actual username casing
 
 6. cmd/user_list.go:
+
 - List all users (preserve original casing)
 - Mark current user with asterisk (*)
 - Show helpful message if no users exist
 
 Wire everything together:
+
 - Root command adds user command
 - User command adds create, switch, list commands
 - All commands use the JSON repository
 
 Write integration tests:
+
 - Test full user creation flow
 - Test case-insensitive operations
 - Test switching between users
 - Test listing with current user indicator
 - Mock user input where needed
+
 ```
 
 ## Prompt 5: Program Start Command
 
 ```
+
 Implement the program start command to initialize a workout program for the current user.
 
 Create cmd/program.go:
+
 - Parent command "program" with description "Manage workout programs"
 - Add child commands in init()
 
 Create cmd/program_start.go:
+
 1. Check for current user (error if none)
 2. List available programs:
    - Show numbered list (e.g., "1. OG Greyskull LP")
@@ -873,28 +962,33 @@ Create cmd/program_start.go:
    - "Program started! Day 1 will be: {exercises}"
 
 Helper functions:
+
 - promptFloat(prompt string) (float64, error) for weight input
 - validatePositive(weight float64) error
 
 Wire to root command.
 
 Write integration tests:
+
 - Mock user input for program selection and weights
 - Verify UserProgram created correctly
 - Verify CurrentProgram updated
 - Verify CurrentDay set to 1
 - Test with no current user
 - Test invalid weight inputs
+
 ```
 
 ## Prompt 6: Workout Calculation Engine
 
 ```
+
 Create the workout calculation engine that generates workouts from templates.
 
 Create workout/calculator.go with:
 
 1. Weight rounding function:
+
 ```go
 func RoundDown2_5(weight float64) float64 {
     return math.Floor(weight/2.5) * 2.5
@@ -902,6 +996,7 @@ func RoundDown2_5(weight float64) float64 {
 ```
 
 2. Warmup calculation:
+
 ```go
 func CalculateWarmupSets(workingWeight float64, warmupTemplates []models.SetTemplate) []models.Set {
     // Return empty slice if working weight < 85 lbs
@@ -913,6 +1008,7 @@ func CalculateWarmupSets(workingWeight float64, warmupTemplates []models.SetTemp
 ```
 
 3. Working set calculation:
+
 ```go
 func CalculateWorkingSets(workingWeight float64, workingTemplates []models.SetTemplate) []models.Set {
     // For each template:
@@ -924,6 +1020,7 @@ func CalculateWorkingSets(workingWeight float64, workingTemplates []models.SetTe
 ```
 
 4. Main calculation function:
+
 ```go
 func CalculateNextWorkout(user *models.User, program *models.Program) (*models.Workout, error) {
     // Get current UserProgram from user.CurrentProgram
@@ -939,6 +1036,7 @@ func CalculateNextWorkout(user *models.User, program *models.Program) (*models.W
 ```
 
 5. Day cycle helper:
+
 ```go
 func GetWorkoutDay(currentDay int, totalDays int) int {
     // Handle 1-based indexing and cycling
@@ -947,6 +1045,7 @@ func GetWorkoutDay(currentDay int, totalDays int) int {
 ```
 
 Write comprehensive tests:
+
 - Test weight rounding (42.7 -> 42.5, 45.0 -> 45.0, etc.)
 - Test warmup skipping for weights < 85 lbs
 - Test warmup calculation for various weights
@@ -954,14 +1053,17 @@ Write comprehensive tests:
 - Test day cycling (day 7 -> day 1)
 - Test full workout calculation
 - Verify all Sets have proper Order values
+
 ```
 
 ## Prompt 7: Next Workout Command
 
 ```
+
 Implement the "workout next" command to display the upcoming workout.
 
 Create cmd/workout.go:
+
 - Parent command "workout" with description "Track and view workouts"
 - Add child commands in init()
 
@@ -980,6 +1082,7 @@ Create cmd/workout_next.go:
    - Handle any errors
 
 4. Display workout with clear formatting:
+
 ```
 Day {N} Workout:
 ================
@@ -1010,17 +1113,20 @@ Squat:
 Wire to root command.
 
 Write integration tests:
+
 - Test with valid program and weights
 - Test display for different days
 - Test with no current user
 - Test with no active program
 - Test warmup display vs no warmup (< 85 lbs)
 - Verify AMRAP sets marked correctly
+
 ```
 
 ## Prompt 8: Next Workout Command
 
 ```
+
 Implement the "workout next" command to display the upcoming workout.
 
 Create cmd/workout.go with:
@@ -1031,8 +1137,8 @@ Create cmd/workout.go with:
    - Loads current user and their active program
    - Uses WorkoutCalculator to determine next workout
    - Displays workout in a clean format:
-     * Day number and exercise list
-     * For each exercise:
+     - Day number and exercise list
+     - For each exercise:
        - Exercise name
        - Warmup sets (e.g., "5 reps @ 45 lbs")
        - Working sets (e.g., "Set 1: 5 reps @ 135 lbs")
@@ -1047,15 +1153,18 @@ Create cmd/workout.go with:
 Wire to root command and integrate with repository and calculator.
 
 Include integration tests that:
+
 - Verify correct workout is shown for different days
 - Test formatting of output
 - Handle case where no program is active
 - Verify warmup and working sets display correctly
+
 ```
 
 ## Prompt 9: Basic Workout Logging
 
 ```
+
 Implement the basic "workout log" command (without --fail flag).
 
 Update cmd/workout.go to add:
@@ -1066,9 +1175,9 @@ Update cmd/workout.go to add:
    - Automatically marks warmup sets as complete
    - Automatically marks the 2x5 working sets as complete
    - For the AMRAP set only:
-     * Prompts "How many reps did you complete for [exercise] AMRAP set (5+)?"
-     * Validates input is a positive integer
-     * Accepts the value
+     - Prompts "How many reps did you complete for [exercise] AMRAP set (5+)?"
+     - Validates input is a positive integer
+     - Accepts the value
    - Creates a CompletedWorkout record with all sets
    - Saves to user's workout history
    - Shows summary of completed workout
@@ -1084,21 +1193,25 @@ Update cmd/workout.go to add:
    - Increment CurrentDay after successful logging
 
 Include tests that:
+
 - Verify warmup and working sets are auto-completed
 - Test AMRAP input validation
 - Verify workout is saved to history
 - Confirm CurrentDay increments
 - Test summary display
+
 ```
 
 ## Prompt 10: Progression System & Final Integration
 
 ```
+
 Implement the weight progression system and integrate it with workout logging.
 
 Create workout/progression.go:
 
 1. AMRAP detection:
+
 ```go
 func GetAMRAPReps(lift *models.Lift) (int, error) {
     // Find the AMRAP set (Type == models.AMRAPSet)
@@ -1108,6 +1221,7 @@ func GetAMRAPReps(lift *models.Lift) (int, error) {
 ```
 
 2. Weight calculation:
+
 ```go
 func CalculateNewWeight(currentWeight float64, amrapReps int, baseIncrement float64, rules *models.ProgressionRules) float64 {
     // If amrapReps < 5: return currentWeight * rules.DeloadPercentage
@@ -1118,6 +1232,7 @@ func CalculateNewWeight(currentWeight float64, amrapReps int, baseIncrement floa
 ```
 
 3. Full progression calculation:
+
 ```go
 func CalculateProgression(workout *models.Workout, currentWeights map[models.LiftName]float64, rules *models.ProgressionRules) (map[models.LiftName]float64, error) {
     // For each lift in workout:
@@ -1134,6 +1249,7 @@ Update cmd/workout_log.go:
    - Call progression.CalculateProgression()
    - Update UserProgram.CurrentWeights with new weights
    - Show weight changes to user:
+
      ```
      Weight Updates:
      Overhead Press: 95 → 97.5 lbs (+2.5)
@@ -1146,10 +1262,12 @@ Update cmd/workout_log.go:
    - Use colors if available (green for increase, red for deload)
 
 Integration updates:
+
 - Ensure CurrentWeights is used for next workout calculation
 - Verify CurrentDay increments after progression
 
 Write comprehensive tests:
+
 - Test normal progression (AMRAP = 5-9)
 - Test double progression (AMRAP >= 10)
 - Test deload (AMRAP < 5)
@@ -1158,11 +1276,13 @@ Write comprehensive tests:
 - Test progression display formatting
 
 Final integration test:
+
 - Create user
 - Start program with weights
 - Log several workouts with different AMRAP counts
 - Verify progression applied correctly
 - Verify next workout uses updated weights
+
 ```
 
 ## Testing Strategy Notes
@@ -1184,3 +1304,4 @@ Each prompt should emphasize:
 - Clear separation of concerns throughout
 - Consistent error handling patterns
 - User-friendly output at every step
+

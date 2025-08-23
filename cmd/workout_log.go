@@ -20,8 +20,15 @@ import (
 var workoutLogCmd = &cobra.Command{
 	Use:   "log",
 	Short: "Log a completed workout",
-	Long:  "Log a completed workout for your current program.",
+	Long:  `Log a completed workout for your current program.
+
+By default, assumes all non-AMRAP sets were completed successfully.
+Use --fail flag to record individual reps for each set.`,
 	RunE:  logWorkout,
+}
+
+func init() {
+	workoutLogCmd.Flags().Bool("fail", false, "Record individual reps for each set")
 }
 
 func logWorkout(cmd *cobra.Command, args []string) error {
@@ -66,14 +73,28 @@ func logWorkout(cmd *cobra.Command, args []string) error {
 	// Display the workout like the "next" command
 	displayWorkout(cmd, nextWorkout)
 
-	// Collect AMRAP reps from user input
-	amrapReps, err := collectAMRAPReps(cmd, nextWorkout)
+	// Check for --fail flag to determine collection mode
+	failMode, err := cmd.Flags().GetBool("fail")
 	if err != nil {
-		return fmt.Errorf("failed to collect AMRAP reps: %w", err)
+		return fmt.Errorf("failed to get fail flag: %w", err)
 	}
 
-	// Create completed workout
-	completedWorkout := buildCompletedWorkout(nextWorkout, amrapReps)
+	var completedWorkout *models.Workout
+	if failMode {
+		// Collect reps for every set individually
+		completedWorkout, err = collectWithFailure(cmd, nextWorkout)
+		if err != nil {
+			return fmt.Errorf("failed to collect workout data: %w", err)
+		}
+	} else {
+		// Collect AMRAP reps only (normal mode)
+		amrapReps, err := collectAMRAPReps(cmd, nextWorkout)
+		if err != nil {
+			return fmt.Errorf("failed to collect AMRAP reps: %w", err)
+		}
+		// Create completed workout with auto-completed sets
+		completedWorkout = buildCompletedWorkout(nextWorkout, amrapReps)
+	}
 
 	// Add to user's workout history
 	user.WorkoutHistory = append(user.WorkoutHistory, *completedWorkout)
@@ -158,6 +179,89 @@ func collectAMRAPReps(cmd *cobra.Command, nextWorkout *models.Workout) (map[mode
 	}
 
 	return amrapReps, nil
+}
+
+// collectWithFailure prompts user for actual reps on every set
+func collectWithFailure(cmd *cobra.Command, nextWorkout *models.Workout) (*models.Workout, error) {
+	// Use a single scanner for the entire input stream
+	scanner := bufio.NewScanner(cmd.InOrStdin())
+
+	// Create completed workout structure
+	completed := &models.Workout{
+		ID:            uuid.Must(uuid.NewV7()),
+		UserProgramID: nextWorkout.UserProgramID,
+		Day:           nextWorkout.Day,
+		Exercises:     make([]models.Lift, len(nextWorkout.Exercises)),
+		EnteredAt:     time.Now(),
+	}
+
+	for i, exercise := range nextWorkout.Exercises {
+		cmd.Printf("\n%s:\n", formatLiftName(exercise.LiftName))
+		
+		completedExercise := models.Lift{
+			ID:       uuid.Must(uuid.NewV7()),
+			LiftName: exercise.LiftName,
+			Sets:     make([]models.Set, len(exercise.Sets)),
+		}
+
+		for j, set := range exercise.Sets {
+			// Format set type for display
+			setTypeStr := "Working"
+			if set.Type == models.WarmupSet {
+				setTypeStr = "Warmup"
+			} else if set.Type == models.AMRAPSet {
+				setTypeStr = "AMRAP"
+			}
+
+			prompt := fmt.Sprintf("%s - Set %d (%s):\nTarget: %d reps @ %s lbs\nHow many reps completed? ", 
+				formatLiftName(exercise.LiftName), 
+				set.Order,
+				setTypeStr,
+				set.TargetReps, 
+				formatWeight(set.Weight))
+			
+			// Display prompt to command output
+			cmd.Print(prompt)
+			
+			// Read from scanner
+			if !scanner.Scan() {
+				if err := scanner.Err(); err != nil {
+					return nil, fmt.Errorf("failed to read input for %s set %d: %w", exercise.LiftName, set.Order, err)
+				}
+				return nil, fmt.Errorf("no input available for %s set %d", exercise.LiftName, set.Order)
+			}
+
+			input := strings.TrimSpace(scanner.Text())
+			if input == "" {
+				return nil, fmt.Errorf("input cannot be empty for %s set %d", exercise.LiftName, set.Order)
+			}
+
+			value, err := strconv.Atoi(input)
+			if err != nil {
+				return nil, fmt.Errorf("invalid number for %s set %d: %s", exercise.LiftName, set.Order, input)
+			}
+
+			if value < 0 {
+				return nil, fmt.Errorf("number cannot be negative for %s set %d", exercise.LiftName, set.Order)
+			}
+			
+			// Create completed set
+			completedSet := models.Set{
+				ID:         uuid.Must(uuid.NewV7()),
+				Weight:     set.Weight,
+				TargetReps: set.TargetReps,
+				ActualReps: value, // Use the actual reps entered by user
+				Type:       set.Type,
+				Order:      set.Order,
+			}
+
+			completedExercise.Sets[j] = completedSet
+		}
+
+		completed.Exercises[i] = completedExercise
+	}
+
+	return completed, nil
 }
 
 // promptInt prompts for a positive integer input

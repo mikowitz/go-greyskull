@@ -366,46 +366,46 @@
 ## Prompt 9: Advanced Workout Logging with Failure Mode
 
 ### Flag Addition
-- [ ] Add --fail flag using cobra.Command.Flags().Bool("fail", false, "Record individual reps for each set")
-- [ ] Access with cmd.Flags().GetBool("fail")
+- [x] Add --fail flag using cobra.Command.Flags().Bool("fail", false, "Record individual reps for each set")
+- [x] Access with cmd.Flags().GetBool("fail")
 
 ### Modified Collection Logic
-- [ ] If --fail is false: Keep existing behavior (auto-complete except AMRAP)
-- [ ] If --fail is true: Prompt for every set
+- [x] If --fail is false: Keep existing behavior (auto-complete except AMRAP)
+- [x] If --fail is true: Prompt for every set
 
 ### Failure Mode Prompting
-- [ ] For each lift and set:
+- [x] For each lift and set:
   ```
   Overhead Press - Set 1 (Warmup):
   Target: 5 reps @ 45 lbs
   How many reps completed? 
   ```
-- [ ] Accept 0 for failed sets
-- [ ] Validate non-negative integer
-- [ ] Show set type (Warmup/Working/AMRAP)
+- [x] Accept 0 for failed sets
+- [x] Validate non-negative integer
+- [x] Show set type (Warmup/Working/AMRAP)
 
 ### Helper Functions
-- [ ] collectWithFailure(workout *models.Workout) *models.Workout
-- [ ] Shows each set individually
-- [ ] Collects actual reps for all sets
+- [x] collectWithFailure(workout *models.Workout) *models.Workout
+- [x] Shows each set individually
+- [x] Collects actual reps for all sets
 
 ### Integration
-- [ ] Keep existing save logic (same workout history update, same CurrentDay increment)
+- [x] Keep existing save logic (same workout history update, same CurrentDay increment)
 
 ### Help Text Update
-- [ ] Update help text:
+- [x] Update help text:
   ```
   Log a completed workout. By default, assumes all non-AMRAP sets were completed successfully.
   Use --fail flag to record individual reps for each set.
   ```
 
 ### Testing
-- [ ] Test default mode still works
-- [ ] Test --fail flag changes behavior
-- [ ] Test collecting reps for every set in fail mode
-- [ ] Test 0 reps accepted for failures
-- [ ] Verify both modes save correctly
-- [ ] Test mixed success/failure sets
+- [x] Test default mode still works
+- [x] Test --fail flag changes behavior
+- [x] Test collecting reps for every set in fail mode
+- [x] Test 0 reps accepted for failures
+- [x] Verify both modes save correctly
+- [x] Test mixed success/failure sets
 
 ## Prompt 10: Progression System & Final Integration
 

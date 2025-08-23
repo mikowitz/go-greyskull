@@ -409,30 +409,30 @@
 
 ## Prompt 10: Progression System & Final Integration
 
-### Progression Functions (workout/progression.go)
-- [ ] Create AMRAP detection:
-  - [ ] func GetAMRAPReps(lift *models.Lift) (int, error)
-  - [ ] Find the AMRAP set (Type == models.AMRAPSet)
-  - [ ] Return ActualReps
-  - [ ] Error if no AMRAP set found
+### Progression Functions (workout/calculator.go - added to existing file)
+- [x] Create AMRAP detection:
+  - [x] func GetAMRAPReps(lift *models.Lift) (int, error)
+  - [x] Find the AMRAP set (Type == models.AMRAPSet)
+  - [x] Return ActualReps
+  - [x] Error if no AMRAP set found
 
-- [ ] Create weight calculation:
-  - [ ] func CalculateNewWeight(currentWeight float64, amrapReps int, baseIncrement float64, rules *models.ProgressionRules) float64
-  - [ ] If amrapReps < 5: return currentWeight * rules.DeloadPercentage
-  - [ ] If amrapReps >= rules.DoubleThreshold: return currentWeight + (baseIncrement * 2)
-  - [ ] Otherwise: return currentWeight + baseIncrement
-  - [ ] Round down to 2.5 lbs
+- [x] Create weight calculation:
+  - [x] func CalculateNewWeight(currentWeight float64, amrapReps int, baseIncrement float64, rules *models.ProgressionRules) float64
+  - [x] If amrapReps < 5: return currentWeight * rules.DeloadPercentage
+  - [x] If amrapReps >= rules.DoubleThreshold: return currentWeight + (baseIncrement * 2)
+  - [x] Otherwise: return currentWeight + baseIncrement
+  - [x] Round down to 2.5 lbs (using existing RoundDown2_5 function)
 
-- [ ] Create full progression calculation:
-  - [ ] func CalculateProgression(workout *models.Workout, currentWeights map[models.LiftName]float64, rules *models.ProgressionRules) (map[models.LiftName]float64, error)
-  - [ ] For each lift in workout: get AMRAP reps, get base increment, calculate new weight
-  - [ ] Return updated weights map
+- [x] Create full progression calculation:
+  - [x] func CalculateProgression(workout *models.Workout, currentWeights map[models.LiftName]float64, rules *models.ProgressionRules) (map[models.LiftName]float64, error)
+  - [x] For each lift in workout: get AMRAP reps, get base increment, calculate new weight
+  - [x] Return updated weights map
 
 ### Update Workout Logging
-- [ ] After saving workout, before incrementing day:
-  - [ ] Call progression.CalculateProgression()
-  - [ ] Update UserProgram.CurrentWeights with new weights
-  - [ ] Show weight changes to user:
+- [x] After saving workout, before incrementing day:
+  - [x] Call workout.CalculateProgression()
+  - [x] Update UserProgram.CurrentWeights with new weights
+  - [x] Show weight changes to user:
     ```
     Weight Updates:
     Overhead Press: 95 → 97.5 lbs (+2.5)
@@ -440,21 +440,21 @@
     ```
 
 ### Weight Change Formatting
-- [ ] Show old → new
-- [ ] Show difference (+X or -X for deload)
-- [ ] Use colors if available (green for increase, red for deload)
+- [x] Show old → new
+- [x] Show difference (+X or -X for deload)
+- [x] Use colors if available (green for increase, red for deload) - basic formatting implemented
 
 ### Integration Updates
-- [ ] Ensure CurrentWeights is used for next workout calculation
-- [ ] Verify CurrentDay increments after progression
+- [x] Ensure CurrentWeights is used for next workout calculation
+- [x] Verify CurrentDay increments after progression
 
 ### Comprehensive Testing
-- [ ] Test normal progression (AMRAP = 5-9)
-- [ ] Test double progression (AMRAP >= 10)
-- [ ] Test deload (AMRAP < 5)
-- [ ] Test weight rounding in progression
-- [ ] Test full integration: log workout → calculate progression → update weights → next workout uses new weights
-- [ ] Test progression display formatting
+- [x] Test normal progression (AMRAP = 5-9)
+- [x] Test double progression (AMRAP >= 10)
+- [x] Test deload (AMRAP < 5)
+- [x] Test weight rounding in progression
+- [x] Test full integration: log workout → calculate progression → update weights → next workout uses new weights
+- [x] Test progression display formatting
 
 ### Final Integration Test
 - [ ] Create user

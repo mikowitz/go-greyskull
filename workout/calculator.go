@@ -123,3 +123,68 @@ func CalculateNextWorkout(user *models.User, program *models.Program) (*models.W
 
 	return workout, nil
 }
+
+// GetAMRAPReps finds and returns the actual reps completed in the AMRAP set for a given lift
+func GetAMRAPReps(lift *models.Lift) (int, error) {
+	for _, set := range lift.Sets {
+		if set.Type == models.AMRAPSet {
+			return set.ActualReps, nil
+		}
+	}
+	return 0, fmt.Errorf("no AMRAP set found for lift %s", lift.LiftName)
+}
+
+// CalculateNewWeight determines the new weight based on AMRAP performance
+func CalculateNewWeight(currentWeight float64, amrapReps int, baseIncrement float64, rules *models.ProgressionRules) float64 {
+	var newWeight float64
+	
+	if amrapReps < 5 {
+		// Deload - reduce weight by deload percentage
+		newWeight = currentWeight * rules.DeloadPercentage
+	} else if amrapReps >= rules.DoubleThreshold {
+		// Double progression - add double the base increment
+		newWeight = currentWeight + (baseIncrement * 2)
+	} else {
+		// Normal progression - add base increment
+		newWeight = currentWeight + baseIncrement
+	}
+	
+	// Round down to 2.5 lbs
+	return RoundDown2_5(newWeight)
+}
+
+// CalculateProgression calculates new weights for all lifts based on workout performance
+func CalculateProgression(workout *models.Workout, currentWeights map[models.LiftName]float64, rules *models.ProgressionRules) (map[models.LiftName]float64, error) {
+	newWeights := make(map[models.LiftName]float64)
+	
+	// Copy current weights first
+	for liftName, weight := range currentWeights {
+		newWeights[liftName] = weight
+	}
+	
+	// Update weights for lifts that were performed in this workout
+	for _, lift := range workout.Exercises {
+		// Get AMRAP reps for this lift
+		amrapReps, err := GetAMRAPReps(&lift)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get AMRAP reps for %s: %w", lift.LiftName, err)
+		}
+		
+		// Get base increment for this lift
+		baseIncrement, exists := rules.IncreaseRules[lift.LiftName]
+		if !exists {
+			return nil, fmt.Errorf("no progression rule found for lift %s", lift.LiftName)
+		}
+		
+		// Get current weight
+		currentWeight, exists := currentWeights[lift.LiftName]
+		if !exists {
+			return nil, fmt.Errorf("current weight not found for lift %s", lift.LiftName)
+		}
+		
+		// Calculate new weight
+		newWeights[lift.LiftName] = CalculateNewWeight(currentWeight, amrapReps, baseIncrement, rules)
+	}
+	
+	return newWeights, nil
+}

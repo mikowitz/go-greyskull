@@ -13,4 +13,6 @@ var workoutCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(workoutCmd)
 	workoutCmd.AddCommand(workoutNextCmd)
+	workoutCmd.AddCommand(workoutLogCmd)
 }
+

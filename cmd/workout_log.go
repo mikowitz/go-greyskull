@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mikowitz/greyskull/display"
 	"github.com/mikowitz/greyskull/models"
 	"github.com/mikowitz/greyskull/program"
 	"github.com/mikowitz/greyskull/repository"
@@ -71,7 +72,8 @@ func logWorkout(cmd *cobra.Command, args []string) error {
 	}
 
 	// Display the workout like the "next" command
-	displayWorkout(cmd, nextWorkout)
+	formatter := display.NewWorkoutFormatter(cmd.OutOrStdout())
+	formatter.DisplayWorkout(nextWorkout)
 
 	// Check for --fail flag to determine collection mode
 	failMode, err := cmd.Flags().GetBool("fail")
@@ -106,7 +108,7 @@ func logWorkout(cmd *cobra.Command, args []string) error {
 	}
 
 	// Display weight changes
-	displayWeightChanges(cmd, userProgram.CurrentWeights, newWeights)
+	formatter.DisplayWeightChanges(userProgram.CurrentWeights, newWeights)
 
 	// Update current weights
 	userProgram.CurrentWeights = newWeights
@@ -131,7 +133,6 @@ func logWorkout(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// displayWorkout is defined in workout_next.go and can be reused here
 
 // collectAMRAPReps prompts user for AMRAP set completion
 func collectAMRAPReps(cmd *cobra.Command, nextWorkout *models.Workout) (map[models.LiftName]int, error) {
@@ -145,7 +146,7 @@ func collectAMRAPReps(cmd *cobra.Command, nextWorkout *models.Workout) (map[mode
 		for _, set := range exercise.Sets {
 			if set.Type == models.AMRAPSet {
 				prompt := fmt.Sprintf("How many reps did you complete for %s AMRAP set (%d+)? ", 
-					formatLiftName(exercise.LiftName), set.TargetReps)
+					display.FormatLiftName(exercise.LiftName), set.TargetReps)
 				
 				// Display prompt to command output
 				cmd.Print(prompt)
@@ -196,7 +197,7 @@ func collectWithFailure(cmd *cobra.Command, nextWorkout *models.Workout) (*model
 	}
 
 	for i, exercise := range nextWorkout.Exercises {
-		cmd.Printf("\n%s:\n", formatLiftName(exercise.LiftName))
+		cmd.Printf("\n%s:\n", display.FormatLiftName(exercise.LiftName))
 		
 		completedExercise := models.Lift{
 			ID:       uuid.Must(uuid.NewV7()),
@@ -214,11 +215,11 @@ func collectWithFailure(cmd *cobra.Command, nextWorkout *models.Workout) (*model
 			}
 
 			prompt := fmt.Sprintf("%s - Set %d (%s):\nTarget: %d reps @ %s lbs\nHow many reps completed? ", 
-				formatLiftName(exercise.LiftName), 
+				display.FormatLiftName(exercise.LiftName), 
 				set.Order,
 				setTypeStr,
 				set.TargetReps, 
-				formatWeight(set.Weight))
+				display.FormatWeight(set.Weight))
 			
 			// Display prompt to command output
 			cmd.Print(prompt)
@@ -369,45 +370,4 @@ func buildCompletedWorkout(template *models.Workout, amrapReps map[models.LiftNa
 	return completed
 }
 
-// displayWeightChanges shows the progression changes to the user
-func displayWeightChanges(cmd *cobra.Command, oldWeights, newWeights map[models.LiftName]float64) {
-	hasChanges := false
-	
-	// Check if any weights changed
-	for liftName, newWeight := range newWeights {
-		if oldWeight, exists := oldWeights[liftName]; exists && oldWeight != newWeight {
-			hasChanges = true
-			break
-		}
-	}
-	
-	if !hasChanges {
-		return // No changes to display
-	}
-	
-	cmd.Printf("\nWeight Updates:\n")
-	
-	// Display changes for each lift that was worked
-	lifts := []models.LiftName{models.OverheadPress, models.BenchPress, models.Squat, models.Deadlift}
-	for _, liftName := range lifts {
-		oldWeight, oldExists := oldWeights[liftName]
-		newWeight, newExists := newWeights[liftName]
-		
-		if oldExists && newExists && oldWeight != newWeight {
-			difference := newWeight - oldWeight
-			var sign string
-			if difference > 0 {
-				sign = "+"
-			}
-			
-			cmd.Printf("%s: %s → %s lbs (%s%.1f)\n", 
-				formatLiftName(liftName),
-				formatWeight(oldWeight),
-				formatWeight(newWeight),
-				sign,
-				difference)
-		}
-	}
-}
 
-// formatWeight and formatLiftName are defined in workout_next.go

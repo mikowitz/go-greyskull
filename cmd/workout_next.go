@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/spf13/cobra"
-	"github.com/mikowitz/greyskull/models"
+	"github.com/mikowitz/greyskull/display"
 	"github.com/mikowitz/greyskull/program"
 	"github.com/mikowitz/greyskull/repository"
 	"github.com/mikowitz/greyskull/workout"
@@ -58,71 +57,9 @@ func showNextWorkout(cmd *cobra.Command, args []string) error {
 	}
 
 	// Display workout
-	displayWorkout(cmd, nextWorkout)
+	formatter := display.NewWorkoutFormatter(cmd.OutOrStdout())
+	formatter.DisplayWorkout(nextWorkout)
 
 	return nil
 }
 
-func displayWorkout(cmd *cobra.Command, workout *models.Workout) {
-	cmd.Printf("Day %d Workout:\n", workout.Day)
-	cmd.Printf("================\n\n")
-
-	for _, lift := range workout.Exercises {
-		cmd.Printf("%s:\n", formatLiftName(lift.LiftName))
-
-		// Group sets by type
-		warmupSets := []models.Set{}
-		workingSets := []models.Set{}
-
-		for _, set := range lift.Sets {
-			if set.Type == models.WarmupSet {
-				warmupSets = append(warmupSets, set)
-			} else {
-				workingSets = append(workingSets, set)
-			}
-		}
-
-		// Display warmup sets if any
-		if len(warmupSets) > 0 {
-			cmd.Printf("  Warmup:\n")
-			for _, set := range warmupSets {
-				cmd.Printf("    %d reps @ %s lbs\n", set.TargetReps, formatWeight(set.Weight))
-			}
-		}
-
-		// Display working sets
-		cmd.Printf("  Working Sets:\n")
-		for i, set := range workingSets {
-			if set.Type == models.AMRAPSet {
-				cmd.Printf("    Set %d: %d+ reps @ %s lbs (AMRAP)\n", i+1, set.TargetReps, formatWeight(set.Weight))
-			} else {
-				cmd.Printf("    Set %d: %d reps @ %s lbs\n", i+1, set.TargetReps, formatWeight(set.Weight))
-			}
-		}
-
-		cmd.Printf("\n")
-	}
-}
-
-func formatWeight(weight float64) string {
-	// Remove decimal if it's a whole number
-	if weight == float64(int(weight)) {
-		return strconv.Itoa(int(weight))
-	}
-	return fmt.Sprintf("%.1f", weight)
-}
-
-func formatLiftName(lift models.LiftName) string {
-	switch lift {
-	case models.Squat:
-		return "Squat"
-	case models.Deadlift:
-		return "Deadlift"
-	case models.BenchPress:
-		return "Bench Press"
-	case models.OverheadPress:
-		return "Overhead Press"
-	default:
-		return string(lift)
-	}
-}

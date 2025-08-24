@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mikowitz/greyskull/repository"
+	"github.com/mikowitz/greyskull/services"
 	"github.com/spf13/cobra"
 )
 
@@ -18,14 +19,14 @@ Original username casing is preserved in the display.`,
 }
 
 func listUsers(cmd *cobra.Command, args []string) error {
-	// Initialize repository
-	repo, err := repository.NewJSONUserRepository()
+	// Initialize command context with dependency injection
+	ctx, err := services.NewCommandContextWithDefaults()
 	if err != nil {
-		return fmt.Errorf("failed to initialize repository: %w", err)
+		return fmt.Errorf("failed to initialize context: %w", err)
 	}
 
 	// Get all users
-	usernames, err := repo.List()
+	usernames, err := ctx.UserRepo.List()
 	if err != nil {
 		return fmt.Errorf("failed to list users: %w", err)
 	}
@@ -37,7 +38,7 @@ func listUsers(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get current user
-	currentUser, err := repo.GetCurrent()
+	currentUser, err := ctx.UserRepo.GetCurrent()
 	var hasCurrentUser bool
 	if err != nil && !errors.Is(err, repository.ErrNoCurrentUser) {
 		return fmt.Errorf("failed to get current user: %w", err)

@@ -7,8 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mikowitz/greyskull/display"
 	"github.com/mikowitz/greyskull/models"
-	"github.com/mikowitz/greyskull/program"
-	"github.com/mikowitz/greyskull/repository"
+	"github.com/mikowitz/greyskull/services"
 	"github.com/mikowitz/greyskull/workout"
 	"github.com/spf13/cobra"
 )
@@ -28,36 +27,16 @@ func init() {
 }
 
 func logWorkout(cmd *cobra.Command, args []string) error {
-	// Load current user
-	repo, err := repository.NewJSONUserRepository()
+	// Initialize command context with dependency injection
+	ctx, err := services.NewCommandContextWithDefaults()
 	if err != nil {
-		return fmt.Errorf("failed to initialize repository: %w", err)
+		return fmt.Errorf("failed to initialize context: %w", err)
 	}
 
-	currentUsername, err := repo.GetCurrent()
+	// Load current user, program, and user program in one call
+	user, userProgram, program, err := ctx.UserService.GetCurrentUserWithProgram()
 	if err != nil {
-		return fmt.Errorf("no current user set. Use 'greyskull user create' or 'greyskull user switch' first")
-	}
-
-	user, err := repo.Get(currentUsername)
-	if err != nil {
-		return fmt.Errorf("failed to load current user: %w", err)
-	}
-
-	// Check if user has a current program
-	if user.CurrentProgram.String() == "00000000-0000-0000-0000-000000000000" {
-		return fmt.Errorf("no active program. Use 'greyskull program start' to begin a program")
-	}
-
-	// Get UserProgram and Program
-	userProgram, exists := user.Programs[user.CurrentProgram]
-	if !exists {
-		return fmt.Errorf("current program not found in user programs")
-	}
-
-	program, err := program.GetByID(userProgram.ProgramID.String())
-	if err != nil {
-		return fmt.Errorf("failed to load program: %w", err)
+		return err
 	}
 
 	// Calculate and display the next workout
@@ -116,7 +95,7 @@ func logWorkout(cmd *cobra.Command, args []string) error {
 	userProgram.CurrentDay = nextDay
 
 	// Save user
-	err = repo.Update(user)
+	err = ctx.UserRepo.Update(user)
 	if err != nil {
 		return fmt.Errorf("failed to save workout: %w", err)
 	}

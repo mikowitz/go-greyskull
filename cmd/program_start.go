@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mikowitz/greyskull/models"
 	"github.com/mikowitz/greyskull/program"
-	"github.com/mikowitz/greyskull/repository"
+	"github.com/mikowitz/greyskull/services"
 	"github.com/spf13/cobra"
 )
 
@@ -22,25 +22,17 @@ var programStartCmd = &cobra.Command{
 func startProgram(cmd *cobra.Command, args []string) error {
 	// Create input reader for user interaction
 	inputReader := NewCLIInputReader(cmd.InOrStdin(), cmd.OutOrStdout())
-	// Initialize repository
-	repo, err := repository.NewJSONUserRepository()
+	
+	// Initialize command context with dependency injection
+	ctx, err := services.NewCommandContextWithDefaults()
 	if err != nil {
-		return fmt.Errorf("failed to initialize repository: %w", err)
-	}
-
-	// Check for current user
-	currentUsername, err := repo.GetCurrent()
-	if err != nil {
-		if err == repository.ErrNoCurrentUser {
-			return fmt.Errorf("no current user set. Please create a user first with 'greyskull user create' or switch to an existing user with 'greyskull user switch <username>'")
-		}
-		return fmt.Errorf("failed to get current user: %w", err)
+		return fmt.Errorf("failed to initialize context: %w", err)
 	}
 
 	// Load current user
-	user, err := repo.Get(currentUsername)
+	user, err := ctx.UserService.RequireCurrentUser()
 	if err != nil {
-		return fmt.Errorf("failed to load user: %w", err)
+		return err
 	}
 
 	// List available programs
@@ -115,7 +107,7 @@ func startProgram(cmd *cobra.Command, args []string) error {
 	user.CurrentProgram = userProgram.ID
 
 	// Save user
-	if err := repo.Update(user); err != nil {
+	if err := ctx.UserRepo.Update(user); err != nil {
 		return fmt.Errorf("failed to save user: %w", err)
 	}
 

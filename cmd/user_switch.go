@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mikowitz/greyskull/repository"
+	"github.com/mikowitz/greyskull/services"
 	"github.com/spf13/cobra"
 )
 
@@ -21,14 +22,14 @@ the current active user for all workout tracking operations.`,
 func switchUser(cmd *cobra.Command, args []string) error {
 	username := args[0]
 
-	// Initialize repository
-	repo, err := repository.NewJSONUserRepository()
+	// Initialize command context with dependency injection
+	ctx, err := services.NewCommandContextWithDefaults()
 	if err != nil {
-		return fmt.Errorf("failed to initialize repository: %w", err)
+		return fmt.Errorf("failed to initialize context: %w", err)
 	}
 
 	// Validate user exists (case-insensitive lookup)
-	user, err := repo.Get(username)
+	user, err := ctx.UserRepo.Get(username)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
 			return fmt.Errorf("user %q not found", username)
@@ -37,7 +38,7 @@ func switchUser(cmd *cobra.Command, args []string) error {
 	}
 
 	// Set as current user
-	if err := repo.SetCurrent(username); err != nil {
+	if err := ctx.UserRepo.SetCurrent(username); err != nil {
 		return fmt.Errorf("failed to set current user: %w", err)
 	}
 

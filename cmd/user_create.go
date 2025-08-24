@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mikowitz/greyskull/models"
 	"github.com/mikowitz/greyskull/repository"
+	"github.com/mikowitz/greyskull/services"
 	"github.com/spf13/cobra"
 )
 
@@ -24,10 +25,11 @@ and will be stored case-insensitively. After creation, the user will be set as t
 func createUser(cmd *cobra.Command, args []string) error {
 	// Create input reader for user interaction
 	inputReader := NewCLIInputReader(cmd.InOrStdin(), cmd.OutOrStdout())
-	// Initialize repository
-	repo, err := repository.NewJSONUserRepository()
+	
+	// Initialize command context with dependency injection
+	ctx, err := services.NewCommandContextWithDefaults()
 	if err != nil {
-		return fmt.Errorf("failed to initialize repository: %w", err)
+		return fmt.Errorf("failed to initialize context: %w", err)
 	}
 
 	// Prompt for username
@@ -42,7 +44,7 @@ func createUser(cmd *cobra.Command, args []string) error {
 	}
 
 	// Check for case-insensitive duplicates
-	if _, err := repo.Get(username); err == nil {
+	if _, err := ctx.UserRepo.Get(username); err == nil {
 		return fmt.Errorf("user %q already exists (case-insensitive)", username)
 	} else if !errors.Is(err, repository.ErrUserNotFound) {
 		return fmt.Errorf("failed to check for existing user: %w", err)
@@ -64,12 +66,12 @@ func createUser(cmd *cobra.Command, args []string) error {
 	}
 
 	// Save user
-	if err := repo.Create(user); err != nil {
+	if err := ctx.UserRepo.Create(user); err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 
 	// Set as current user
-	if err := repo.SetCurrent(username); err != nil {
+	if err := ctx.UserRepo.SetCurrent(username); err != nil {
 		return fmt.Errorf("failed to set current user: %w", err)
 	}
 

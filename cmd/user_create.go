@@ -1,12 +1,9 @@
 package cmd
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"os"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,6 +22,8 @@ and will be stored case-insensitively. After creation, the user will be set as t
 }
 
 func createUser(cmd *cobra.Command, args []string) error {
+	// Create input reader for user interaction
+	inputReader := NewCLIInputReader(cmd.InOrStdin(), cmd.OutOrStdout())
 	// Initialize repository
 	repo, err := repository.NewJSONUserRepository()
 	if err != nil {
@@ -32,12 +31,10 @@ func createUser(cmd *cobra.Command, args []string) error {
 	}
 
 	// Prompt for username
-	fmt.Fprint(cmd.OutOrStdout(), "Enter username: ")
-	scanner := bufio.NewScanner(os.Stdin)
-	if !scanner.Scan() {
-		return errors.New("failed to read username")
+	username, err := inputReader.ReadLine("Enter username: ")
+	if err != nil {
+		return fmt.Errorf("failed to read username: %w", err)
 	}
-	username := strings.TrimSpace(scanner.Text())
 
 	// Validate username
 	if err := validateUsername(username); err != nil {
@@ -94,3 +91,4 @@ func validateUsername(username string) error {
 
 	return nil
 }
+

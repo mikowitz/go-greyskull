@@ -1,12 +1,7 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -138,8 +133,8 @@ func logWorkout(cmd *cobra.Command, args []string) error {
 func collectAMRAPReps(cmd *cobra.Command, nextWorkout *models.Workout) (map[models.LiftName]int, error) {
 	amrapReps := make(map[models.LiftName]int)
 
-	// Use a single scanner for the entire input stream
-	scanner := bufio.NewScanner(cmd.InOrStdin())
+	// Create input reader for user interaction
+	inputReader := NewCLIInputReader(cmd.InOrStdin(), cmd.OutOrStdout())
 
 	for _, exercise := range nextWorkout.Exercises {
 		// Find AMRAP sets
@@ -148,29 +143,9 @@ func collectAMRAPReps(cmd *cobra.Command, nextWorkout *models.Workout) (map[mode
 				prompt := fmt.Sprintf("How many reps did you complete for %s AMRAP set (%d+)? ", 
 					display.FormatLiftName(exercise.LiftName), set.TargetReps)
 				
-				// Display prompt to command output
-				cmd.Print(prompt)
-				
-				// Read from scanner
-				if !scanner.Scan() {
-					if err := scanner.Err(); err != nil {
-						return nil, fmt.Errorf("failed to read input for %s: %w", exercise.LiftName, err)
-					}
-					return nil, fmt.Errorf("no input available for %s", exercise.LiftName)
-				}
-
-				input := strings.TrimSpace(scanner.Text())
-				if input == "" {
-					return nil, fmt.Errorf("input cannot be empty for %s", exercise.LiftName)
-				}
-
-				value, err := strconv.Atoi(input)
+				value, err := inputReader.ReadPositiveInt(prompt)
 				if err != nil {
-					return nil, fmt.Errorf("invalid number for %s: %s", exercise.LiftName, input)
-				}
-
-				if value <= 0 {
-					return nil, fmt.Errorf("number must be positive for %s", exercise.LiftName)
+					return nil, fmt.Errorf("failed to read AMRAP reps for %s: %w", exercise.LiftName, err)
 				}
 				
 				amrapReps[exercise.LiftName] = value
@@ -184,8 +159,8 @@ func collectAMRAPReps(cmd *cobra.Command, nextWorkout *models.Workout) (map[mode
 
 // collectWithFailure prompts user for actual reps on every set
 func collectWithFailure(cmd *cobra.Command, nextWorkout *models.Workout) (*models.Workout, error) {
-	// Use a single scanner for the entire input stream
-	scanner := bufio.NewScanner(cmd.InOrStdin())
+	// Create input reader for user interaction
+	inputReader := NewCLIInputReader(cmd.InOrStdin(), cmd.OutOrStdout())
 
 	// Create completed workout structure
 	completed := &models.Workout{
@@ -221,25 +196,9 @@ func collectWithFailure(cmd *cobra.Command, nextWorkout *models.Workout) (*model
 				set.TargetReps, 
 				display.FormatWeight(set.Weight))
 			
-			// Display prompt to command output
-			cmd.Print(prompt)
-			
-			// Read from scanner
-			if !scanner.Scan() {
-				if err := scanner.Err(); err != nil {
-					return nil, fmt.Errorf("failed to read input for %s set %d: %w", exercise.LiftName, set.Order, err)
-				}
-				return nil, fmt.Errorf("no input available for %s set %d", exercise.LiftName, set.Order)
-			}
-
-			input := strings.TrimSpace(scanner.Text())
-			if input == "" {
-				return nil, fmt.Errorf("input cannot be empty for %s set %d", exercise.LiftName, set.Order)
-			}
-
-			value, err := strconv.Atoi(input)
+			value, err := inputReader.ReadInt(prompt)
 			if err != nil {
-				return nil, fmt.Errorf("invalid number for %s set %d: %s", exercise.LiftName, set.Order, input)
+				return nil, fmt.Errorf("failed to read reps for %s set %d: %w", exercise.LiftName, set.Order, err)
 			}
 
 			if value < 0 {
@@ -265,66 +224,6 @@ func collectWithFailure(cmd *cobra.Command, nextWorkout *models.Workout) (*model
 	return completed, nil
 }
 
-// promptInt prompts for a positive integer input
-func promptInt(prompt string) (int, error) {
-	reader := bufio.NewReader(os.Stdin)
-	
-	if prompt != "" {
-		fmt.Print(prompt)
-	}
-	input, err := reader.ReadString('\n')
-	if err != nil {
-		return 0, fmt.Errorf("failed to read input: %w", err)
-	}
-
-	input = strings.TrimSpace(input)
-	if input == "" {
-		return 0, fmt.Errorf("input cannot be empty")
-	}
-
-	value, err := strconv.Atoi(input)
-	if err != nil {
-		return 0, fmt.Errorf("invalid number: %s", input)
-	}
-
-	if value <= 0 {
-		return 0, fmt.Errorf("number must be positive")
-	}
-
-	return value, nil
-}
-
-// promptIntWithReader is a testable version of promptInt that accepts an io.Reader
-func promptIntWithReader(prompt string, reader io.Reader) (int, error) {
-	scanner := bufio.NewScanner(reader)
-	
-	if prompt != "" {
-		fmt.Print(prompt)
-	}
-	
-	if !scanner.Scan() {
-		if err := scanner.Err(); err != nil {
-			return 0, fmt.Errorf("failed to read input: %w", err)
-		}
-		return 0, fmt.Errorf("no input available")
-	}
-
-	input := strings.TrimSpace(scanner.Text())
-	if input == "" {
-		return 0, fmt.Errorf("input cannot be empty")
-	}
-
-	value, err := strconv.Atoi(input)
-	if err != nil {
-		return 0, fmt.Errorf("invalid number: %s", input)
-	}
-
-	if value <= 0 {
-		return 0, fmt.Errorf("number must be positive")
-	}
-
-	return value, nil
-}
 
 // buildCompletedWorkout creates a completed workout from template with AMRAP reps filled in
 func buildCompletedWorkout(template *models.Workout, amrapReps map[models.LiftName]int) *models.Workout {

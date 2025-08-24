@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"bytes"
 	"io"
-	"os"
 	"testing"
 	"time"
 
@@ -100,113 +98,6 @@ func TestStartProgram_FullWorkflow(t *testing.T) {
 	assert.Equal(t, 135.0, savedProgram.CurrentWeights[models.Squat])
 }
 
-func TestPromptFloat(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected float64
-		wantErr  bool
-	}{
-		{
-			name:     "valid integer",
-			input:    "135",
-			expected: 135.0,
-			wantErr:  false,
-		},
-		{
-			name:     "valid decimal",
-			input:    "135.5",
-			expected: 135.5,
-			wantErr:  false,
-		},
-		{
-			name:     "valid with spaces",
-			input:    "  135.0  ",
-			expected: 135.0,
-			wantErr:  false,
-		},
-		{
-			name:     "zero",
-			input:    "0",
-			expected: 0.0,
-			wantErr:  false,
-		},
-	}
-	
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Mock stdin
-			oldStdin := os.Stdin
-			r, w, _ := os.Pipe()
-			os.Stdin = r
-			
-			// Write input
-			go func() {
-				defer w.Close()
-				w.Write([]byte(tt.input + "\n"))
-			}()
-			
-			// Create command with buffer for output
-			var buf bytes.Buffer
-			cmd := programStartCmd
-			cmd.SetOut(&buf)
-			
-			result, err := promptFloat(cmd, "Enter weight: ")
-			
-			// Restore stdin
-			os.Stdin = oldStdin
-			r.Close()
-			
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
-}
-
-func TestValidatePositive(t *testing.T) {
-	tests := []struct {
-		name    string
-		weight  float64
-		wantErr bool
-	}{
-		{
-			name:    "positive weight",
-			weight:  135.5,
-			wantErr: false,
-		},
-		{
-			name:    "zero weight",
-			weight:  0.0,
-			wantErr: true,
-		},
-		{
-			name:    "negative weight",
-			weight:  -10.0,
-			wantErr: true,
-		},
-		{
-			name:    "small positive weight",
-			weight:  0.1,
-			wantErr: false,
-		},
-	}
-	
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validatePositive(tt.weight)
-			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), "weight must be positive")
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
 
 func TestLiftDisplayName(t *testing.T) {
 	tests := []struct {
@@ -249,15 +140,6 @@ func TestStartProgram_InvalidWeights(t *testing.T) {
 	err = repo.SetCurrent("TestUser")
 	require.NoError(t, err)
 	
-	// Test validation with negative weight
-	err = validatePositive(-10.0)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "weight must be positive")
-	
-	// Test validation with zero weight
-	err = validatePositive(0.0)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "weight must be positive")
 }
 
 func TestStartProgram_ProgramSelection(t *testing.T) {

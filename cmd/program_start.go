@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -21,6 +20,8 @@ var programStartCmd = &cobra.Command{
 }
 
 func startProgram(cmd *cobra.Command, args []string) error {
+	// Create input reader for user interaction
+	inputReader := NewCLIInputReader(cmd.InOrStdin(), cmd.OutOrStdout())
 	// Initialize repository
 	repo, err := repository.NewJSONUserRepository()
 	if err != nil {
@@ -56,12 +57,12 @@ func startProgram(cmd *cobra.Command, args []string) error {
 	// Prompt for program selection
 	var selection int
 	for {
-		fmt.Fprint(cmd.OutOrStdout(), "Select a program (enter number): ")
-		var input string
-		fmt.Scanln(&input)
-		
-		num, err := strconv.Atoi(strings.TrimSpace(input))
-		if err != nil || num < 1 || num > len(programs) {
+		num, err := inputReader.ReadInt("Select a program (enter number): ")
+		if err != nil {
+			fmt.Fprintf(cmd.OutOrStdout(), "Invalid input: %v. Please try again.\n", err)
+			continue
+		}
+		if num < 1 || num > len(programs) {
 			fmt.Fprintf(cmd.OutOrStdout(), "Invalid selection. Please enter a number between 1 and %d.\n", len(programs))
 			continue
 		}
@@ -82,12 +83,10 @@ func startProgram(cmd *cobra.Command, args []string) error {
 	// Prompt for starting weights
 	startingWeights := make(map[models.LiftName]float64)
 	for _, lift := range lifts {
-		weight, err := promptFloat(cmd, fmt.Sprintf("Enter starting weight for %s (lbs): ", liftDisplayName(lift)))
+		prompt := fmt.Sprintf("Enter starting weight for %s (lbs): ", liftDisplayName(lift))
+		weight, err := inputReader.ReadPositiveFloat(prompt)
 		if err != nil {
-			return fmt.Errorf("failed to get weight for %s: %w", lift, err)
-		}
-		if err := validatePositive(weight); err != nil {
-			return fmt.Errorf("invalid weight for %s: %w", lift, err)
+			return fmt.Errorf("failed to get weight for %s: %v", lift, err)
 		}
 		startingWeights[lift] = weight
 	}
@@ -136,29 +135,6 @@ func startProgram(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// promptFloat prompts the user for a float64 value
-func promptFloat(cmd *cobra.Command, prompt string) (float64, error) {
-	for {
-		fmt.Fprint(cmd.OutOrStdout(), prompt)
-		var input string
-		fmt.Scanln(&input)
-		
-		weight, err := strconv.ParseFloat(strings.TrimSpace(input), 64)
-		if err != nil {
-			fmt.Fprintln(cmd.OutOrStdout(), "Invalid number. Please enter a valid weight.")
-			continue
-		}
-		return weight, nil
-	}
-}
-
-// validatePositive ensures the weight is positive
-func validatePositive(weight float64) error {
-	if weight <= 0 {
-		return fmt.Errorf("weight must be positive, got %f", weight)
-	}
-	return nil
-}
 
 // liftDisplayName converts LiftName to display-friendly format
 func liftDisplayName(lift models.LiftName) string {
